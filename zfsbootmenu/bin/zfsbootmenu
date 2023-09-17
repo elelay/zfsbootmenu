@@ -22,6 +22,12 @@ done
 
 unset src sources
 
+#shellcheck disable=SC1091
+if [ -r "/lib/user-lib.sh" ]; then
+  source "/lib/user-lib.sh"
+  zdebug "sourced user library"
+fi
+
 # Make sure /dev/zfs exists, otherwise drop to a recovery shell
 [ -e /dev/zfs ] || emergency_shell "/dev/zfs missing, check that kernel modules are loaded"
 

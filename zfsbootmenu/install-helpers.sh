@@ -216,6 +216,13 @@ create_zbm_traceconf() {
 	EOF
 }
 
+install_zbm_userlib() {
+
+  # shellcheck disable=SC2154
+  if [ -r "${zfsbootmenu_user_library}" ]; then
+    zbm_install_file "${zfsbootmenu_user_library}" "/lib/user-lib.sh"
+  fi
+}
 
 install_zbm_core() {
   local cdir cfile ret
