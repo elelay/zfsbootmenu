@@ -10,6 +10,7 @@ sources=(
   /etc/zfsbootmenu.conf
   /lib/zfsbootmenu-kcl.sh
   /lib/zfsbootmenu-core.sh
+  /lib/zfsbootmenu-ui.sh
   /lib/kmsg-log-lib.sh
   /etc/profile
 )
@@ -208,18 +209,17 @@ fi
 
 # Attempt to find the bootfs property
 # shellcheck disable=SC2086
-while read -r line; do
-  if [ "${line}" = "-" ]; then
-    BOOTFS=
-  else
-    BOOTFS="${line}"
-    break
-  fi
-done <<<"$( zpool list -H -o bootfs ${boot_pool} )"
 
-if [ -n "${BOOTFS}" ]; then
-  export BOOTFS
-  echo "${BOOTFS}" > "${BASE}/bootfs"
+if [ -n "${zbm_prefer_pool}" ] ; then
+   BOOTFS="$( get_bootfs "${zbm_prefer_pool}" )"
+else
+  populate_be_list "${BASE}/bootenvs"
+  BOOTFS="$( find_bootfs )"
+fi
+
+if [ -n "${BOOTFS}" ] ; then
+    export BOOTFS
+    echo "${BOOTFS}" > "${BASE}/bootfs"
 fi
 
 : > "${BASE}/initialized"

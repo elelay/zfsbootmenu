@@ -230,6 +230,66 @@ log_unimportable() {
   done <<<"$( zpool import )"
 }
 
+# args: pool
+# prints: bootfs
+# returns: 0 if bootfs is available, 1 if not
+
+get_bootfs() {
+  local pool bootfs
+
+  pool="${1}"
+  if [ -z "${1}" ]; then
+    zwarn "pool undefined"
+    return 1
+  fi
+
+  # Easy case, bootfs is set pool property
+  bootfs="$( zpool get -H -o value bootfs "${pool}" )"
+  zdebug "bootfs property for '${pool}' is ${bootfs}"
+  if [ "${bootfs}" != "-" ]; then
+    echo "${bootfs}"
+    return 0
+  fi
+
+  if [ "$( grep "^${pool}/" "${BASE}/bootenvs" -c )" -eq 1 ]; then
+    zdebug "found 1 entry for ${pool} in bootenvs"
+    grep "^${pool}/" "${BASE}/bootenvs"
+    return 0
+  fi
+
+  return 1
+}
+
+# args: none
+# prints: potential bootfs
+# returns: 0 if a bootfs has been identified
+
+find_bootfs() {
+  local bootfs pool
+
+  # Simplest possible case, bootfs is set for the preferred pool
+#  if [ -n "${zbm_prefer_pool}" ] ; then
+#    if bootfs="$( get_bootfs "${zbm_prefer_pool}" )" ; then
+#      zdebug "bootfs from get_bootfs is ${bootfs}"
+#      echo "${bootfs}"
+#      return 0
+#    else
+#      return 1
+#    fi
+#  else
+    zdebug "checking all pools for a bootfs value"
+    while read -r pool ; do
+      if [ "${pool}" != "${zbm_prefer_pool}" ]; then
+        if bootfs="$( get_bootfs "${pool}" )" ; then
+          echo "${bootfs}"
+          return 0
+        fi
+      fi
+    done <<<"$( zpool list -H -o name )"
+#  fi
+  return 1
+}
+
 # args: none
 # prints: nothing
 # returns: 0 if at least one pool is available
